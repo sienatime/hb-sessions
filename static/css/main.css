@@ -14,3 +14,8 @@ form.signin input.form-control {
 form.signin input.btn {
     margin-top: 15px;
 }
+
+.navbar-header{
+    /* overwrite float: left default bootstrap style */
+    float: none;
+}

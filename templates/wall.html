@@ -1,13 +1,20 @@
 {% extends 'master.html' %}
 {% block body %}
-<h1>Wall Posts</h1>
+<h1>{{ username }}'s Wall Posts</h1>
+
+<!-- post: 0: owner ID, 1: author ID, 2: date, 3: text-->
     {% for post in posts %}
-        {{ post }}
+    <div class="post">
+        <h3>{{ post[1] }} said...</h3>
+        <p>{{ post[3] }}</p>
+    </div>
     {% endfor %}
 
-{% if userid%}
-<form method="POST" action="post">
-    <textarea></textarea>
+{{ profile }}
+
+{% if userid %}
+<form method="POST" action="/user/{{ username }}">
+    <textarea name="post_text"></textarea>
 
 <input type="submit" class="btn btn-lg btn-primary btn-block" value="Post">
 </form>
