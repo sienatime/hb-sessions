@@ -2,20 +2,32 @@ body {
     background-color: #eee;
 }
 
-form.signin {
-    width: 330px;
-    margin: 50px auto;
-}
-
 form.signin input.form-control {
     margin-bottom: 5px;
 }
 
-form.signin input.btn {
+input.btn {
     margin-top: 15px;
+}
+
+form.signin{
+    width: 330px;
+    margin: 50px auto;
 }
 
 .navbar-header{
     /* overwrite float: left default bootstrap style */
     float: none;
+}
+
+.post{
+    background: white;
+    border-radius: 10px;
+    box-shadow: 6px 6px 12px #C0C0BE;
+    padding: 10px;
+    margin: 15px 0;
+}
+
+h1, h2, h3{
+    margin-top: 0;
 }

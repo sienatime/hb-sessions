@@ -30,10 +30,10 @@ def get_name_by_id(user_id):
     return row[0]
 
 def get_posts_by_user_id(user_id):
-    query = """SELECT owner_id, author_id, created_at, content FROM Wall_Posts WHERE owner_id = ?"""
+    query = """SELECT owner_id, author_id, created_at, content FROM Wall_Posts WHERE owner_id = ? ORDER BY id DESC"""
     DB.execute(query, (user_id,))
-    row = DB.fetchall()
-    return row #this is a list
+    rows = DB.fetchall()
+    return rows #this is a list
 
 def write_wall_post(owner_id, author_id, post_text):
     query = """INSERT into Wall_Posts (owner_id, author_id, created_at, content) values (?, ?, datetime('now'), ?) """
@@ -44,5 +44,11 @@ def create_user(username, password):
     query = """INSERT into Users (username, password) values (?, ?) """
     DB.execute(query, (username, hash(password)))
     CONN.commit()
+
+def get_newsfeed():
+    query = """SELECT owner_id, author_id, created_at, content FROM wall_posts ORDER BY id DESC LIMIT 5"""
+    DB.execute(query)
+    rows = DB.fetchall()
+    return rows
 
 connect_to_db()

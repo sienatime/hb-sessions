@@ -8,9 +8,17 @@
         <div class="navbar-header">
             <ul class="nav navbar-nav">
                 <li><a class="navbar-brand" href="/">The Book of Faces</a></li>
+                {% if not userid %}
                 <li><a href="/register">Register</a></li>
-                <li><a href="/logout">Logout</a></li>
+                {% endif %}
             </ul> 
+
+        {% if userid %}
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/user/{{current_user}}">{{current_user}}</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        {% endif %}
         </div>
         <div class="container">
             {% block body %}{% endblock %}

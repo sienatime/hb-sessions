@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 import model
+import datetime
 
 app = Flask(__name__)
 app.secret_key = "shhhhthisisasecret"
@@ -9,7 +10,8 @@ app.secret_key = "shhhhthisisasecret"
 def index():
     username = logged_in()
     if username:
-        return redirect(url_for("show_wall_posts", username=username))
+        #return redirect(url_for("show_wall_posts", username=username))
+        return redirect(url_for("show_newsfeed"))
 
     return render_template("index.html")
 
@@ -24,22 +26,24 @@ def process_login():
     authenticated = model.authenticate(username, password)
     if authenticated:
         # a flash is just a message that we can show to the user once
-        flash("User authenticated!")
+        flash("User authenticated!","alert-success")
         # saves the username in the session so we can keep using it
         user_id = model.get_user_by_name(username)
         session['user_id'] = user_id
+        session['username'] = username
+        return redirect(url_for("show_newsfeed"))
     else:
-        flash("Password incorrect, please try again.")
+        flash("Password incorrect, please try again.","alert-danger")
 
     # go to the index page once we are done trying to authenticate. url_for allows us to change our URLs later without breaking all of the references to them.
-    return redirect(url_for("show_wall_posts", username=username))
+    return redirect(url_for("index"))
 
 @app.route("/register")
 def register():
     username = logged_in()
     if username:
         return redirect(url_for("show_wall_posts", username=username))
-        
+
     return render_template("register.html")
 
 @app.route("/register", methods=['POST'])
@@ -56,16 +60,29 @@ def create_account():
     existing_user = model.get_user_by_name(new_username)
 
     if existing_user:
-        flash("Username already exists, please try again.")
+        flash("Username already exists, please try again.","alert-danger")
         return redirect(url_for("register"))
 
     if new_pwd == verify_pass:
         model.create_user(new_username, new_pwd)
-        flash("User created! You can now log in.")
+        flash("User created! You can now log in.","alert-success")
         return redirect(url_for("index"))
     else:
-        flash("Passwords did not match.")
+        flash("Passwords did not match.","alert-danger")
         return redirect(url_for("register"))
+
+@app.route("/newsfeed")
+def show_newsfeed():
+    model.connect_to_db()
+    feed = model.get_newsfeed()
+    user_id = session.get('user_id')
+    current_user = model.get_name_by_id(user_id)
+    pretty_data = []
+    for story in feed:
+        timestamp = datetime.datetime.strptime(str(story[2]),"%Y-%m-%d %H:%M:%S")
+        pretty_data.append( (model.get_name_by_id((story[0])), model.get_name_by_id(story[1]), timestamp, story[3]) )
+
+    return render_template("feed.html", feed=pretty_data, userid=user_id, current_user=current_user)
 
 @app.route("/user/<username>")
 def show_wall_posts(username):
@@ -76,14 +93,16 @@ def show_wall_posts(username):
 
     # post: 0: owner ID, 1: author ID, 2: date, 3: text
     for post in posts:
-        pretty_data.append( (post[0], model.get_name_by_id(post[1]), post[2], post[3]) )
+        timestamp = datetime.datetime.strptime(post[2],"%Y-%m-%d %H:%M:%S")
+        pretty_data.append( (post[0], model.get_name_by_id(post[1]), timestamp, post[3]) )
 
     user_id = session.get('user_id')
     profile = username
     if user_id:
-        return render_template("wall.html", posts=pretty_data, userid=user_id, username=profile)
+        username = model.get_name_by_id(user_id)
+        return render_template("wall.html", posts=pretty_data, userid=user_id, username=profile, current_user=username)
 
-    return render_template("wall.html", posts=pretty_data, profile=username)
+    return render_template("wall.html", posts=pretty_data, username=username)
 
 @app.route("/user/<username>", methods=['POST'])
 def post_to_wall(username):

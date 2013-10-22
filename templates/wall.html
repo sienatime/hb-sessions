@@ -2,22 +2,21 @@
 {% block body %}
 <h1>{{ username }}'s Wall Posts</h1>
 
-<!-- post: 0: owner ID, 1: author ID, 2: date, 3: text-->
-    {% for post in posts %}
-    <div class="post">
-        <h3>{{ post[1] }} said...</h3>
-        <p>{{ post[3] }}</p>
-    </div>
-    {% endfor %}
-
-{{ profile }}
-
-{% if userid %}
+{% if userid and current_user != username %}
 <form method="POST" action="/user/{{ username }}">
-    <textarea name="post_text"></textarea>
-
+    <h4>Write on {{username}}'s wall!</h4>
+    <textarea name="post_text" class="form-control" rows="3"></textarea>
 <input type="submit" class="btn btn-lg btn-primary btn-block" value="Post">
 </form>
 {% endif %}
+
+<!-- post: 0: owner ID, 1: author ID, 2: date, 3: text-->
+    {% for post in posts %}
+    <div class="post">
+        <h3><a href="/user/{{post[1]}}">{{ post[1] }}</a> said...</h3>
+        <p>{{ post[3] }}</p>
+        <span>Posted on {{post[2].month}}-{{post[2].day}}-{{post[2].year}} at {{post[2].hour}}:{{post[2].minute}}:{{post[2].second}} (GMT)</span>
+    </div>
+    {% endfor %}
 
 {% endblock %}
