@@ -2,7 +2,7 @@ body {
     background-color: #eee;
 }
 
-form.signin input.form-control {
+form input.form-control {
     margin-bottom: 5px;
 }
 
@@ -10,7 +10,7 @@ input.btn {
     margin-top: 15px;
 }
 
-form.signin{
+form{
     width: 330px;
     margin: 50px auto;
 }
@@ -23,11 +23,25 @@ form.signin{
 .post{
     background: white;
     border-radius: 10px;
-    box-shadow: 6px 6px 12px #C0C0BE;
-    padding: 10px;
-    margin: 15px 0;
 }
 
-h1, h2, h3{
+.post, .alert{
+    box-shadow: 6px 6px 12px #C0C0BE;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+h1, h2, h3, h4{
     margin-top: 0;
+}
+
+#postContainer{
+    float: left;
+    width: 400px;
+    margin-right: 20px;
+}
+
+form#postToWall{
+    float: left;
+    margin: 0;
 }

@@ -1,4 +1,5 @@
 import sqlite3
+import hashlib
 
 DB = None
 CONN = None
@@ -10,7 +11,7 @@ def connect_to_db():
 
 def authenticate(username, password):
     query = """SELECT id FROM Users WHERE username = ? AND password = ?"""
-    DB.execute(query, (username, hash(password)))
+    DB.execute(query, (username, SHA1_hash(password)))
     row = DB.fetchone()
     
     return row
@@ -42,7 +43,7 @@ def write_wall_post(owner_id, author_id, post_text):
 
 def create_user(username, password):
     query = """INSERT into Users (username, password) values (?, ?) """
-    DB.execute(query, (username, hash(password)))
+    DB.execute(query, (username, SHA1_hash(password)))
     CONN.commit()
 
 def get_newsfeed():
@@ -50,5 +51,9 @@ def get_newsfeed():
     DB.execute(query)
     rows = DB.fetchall()
     return rows
+
+def SHA1_hash(hash_this):
+    # python's hash() hashes differently on 32- and 64-bit machines, LOL
+    return hashlib.sha1(hash_this).hexdigest()
 
 connect_to_db()
