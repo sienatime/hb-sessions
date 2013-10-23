@@ -8,14 +8,14 @@
         <div class="navbar-header">
             <ul class="nav navbar-nav">
                 <li><a class="navbar-brand" href="/">The Book of Faces</a></li>
-                {% if not userid %}
+                {% if not session.get('user_id') %}
                 <li><a href="/register">Register</a></li>
                 {% endif %}
             </ul> 
 
-        {% if userid %}
+        {% if session.get('user_id') %}
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="/user/{{current_user}}">{{current_user}}</a></li>
+                <li><a href="/user/{{session['username']}}">{{session['username']}}</a></li>
                 <li><a href="/logout">Logout</a></li>
             </ul>
         {% endif %}

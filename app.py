@@ -8,9 +8,7 @@ app.secret_key = "shhhhthisisasecret"
 # / has two routing functions. this one is for GET. the form has no action URL so it will just reload the same page it is on.
 @app.route("/")
 def index():
-    username = logged_in()
-    if username:
-        #return redirect(url_for("show_wall_posts", username=username))
+    if logged_in():
         return redirect(url_for("show_newsfeed"))
 
     return render_template("index.html")
@@ -25,9 +23,9 @@ def process_login():
     model.connect_to_db()
     authenticated = model.authenticate(username, password)
     if authenticated:
-        # a flash is just a message that we can show to the user once
-        flash("User authenticated!","alert-success")
-        # saves the username in the session so we can keep using it
+        # a flash is just a message that we can show to the user once. you can also pass it a category, and here I'm using the Bootstrap alert types to get some extra fancy styling
+        flash("Welcome!","alert-success")
+        # saves the username and user ID in the session so we can keep using it
         user_id = model.get_user_by_name(username)
         session['user_id'] = user_id
         session['username'] = username
@@ -35,22 +33,24 @@ def process_login():
     else:
         flash("Password incorrect, please try again.","alert-danger")
 
-    # go to the index page once we are done trying to authenticate. url_for allows us to change our URLs later without breaking all of the references to them.
+    # go to the index page if we failed to authenticate. url_for allows us to change our URLs later without breaking all of the references to them.
     return redirect(url_for("index"))
 
 @app.route("/register")
 def register():
-    username = logged_in()
-    if username:
-        return redirect(url_for("show_wall_posts", username=username))
+    # if you are logged in and you try to go to /register, go instead to your wall.
+    if logged_in():
+        username = session['username']
+        return redirect(url_for("show_wall_posts", profile=username))
 
     return render_template("register.html")
 
 @app.route("/register", methods=['POST'])
 def create_account():
-    username = logged_in()
-    if username:
-        return redirect(url_for("show_wall_posts", username=username))
+    # i actually don't think you need this, because you will never be posting from the register page if you are logged in, since the register page just sends you to your profile if you are logged in.
+    if logged_in():
+        username = session['username']
+        return redirect(url_for("show_wall_posts", profile=username))
 
     new_username = request.form.get("username")
     new_pwd = request.form.get("password")
@@ -60,9 +60,9 @@ def create_account():
     existing_user = model.get_user_by_name(new_username)
 
     if existing_user:
-        flash("Username already exists, please try again.","alert-danger")
+        flash("Username already exists, please choose a new one or log in instead.","alert-danger")
         return redirect(url_for("register"))
-
+        
     if new_pwd == verify_pass:
         model.create_user(new_username, new_pwd)
         flash("User created! You can now log in.","alert-success")
@@ -73,50 +73,35 @@ def create_account():
 
 @app.route("/newsfeed")
 def show_newsfeed():
-    model.connect_to_db()
-    feed = model.get_newsfeed()
-    user_id = session.get('user_id')
-    current_user = model.get_name_by_id(user_id)
-    pretty_data = []
-    for story in feed:
-        timestamp = datetime.datetime.strptime(str(story[2]),"%Y-%m-%d %H:%M:%S")
-        pretty_data.append( (model.get_name_by_id((story[0])), model.get_name_by_id(story[1]), timestamp, story[3]) )
+    if logged_in():
+        model.connect_to_db()
+        feed = model.get_newsfeed()
+        pretty_data = make_pretty_data(feed)
+        return render_template("feed.html", feed=pretty_data)
 
-    return render_template("feed.html", feed=pretty_data, userid=user_id, current_user=current_user)
+    flash("Sign up or log in to view the news feed!", "alert-danger")
+    return redirect(url_for("index"))
 
-@app.route("/user/<username>")
-def show_wall_posts(username):
+@app.route("/user/<profile>")
+def show_wall_posts(profile):
     model.connect_to_db()
-    display_id = model.get_user_by_name(username)
+    display_id = model.get_user_by_name(profile)
     posts = model.get_posts_by_user_id(display_id)
-    pretty_data = []
+    pretty_data = make_pretty_data(posts)
+    return render_template("wall.html", posts=pretty_data, profile=profile)
 
-    # post: 0: owner ID, 1: author ID, 2: date, 3: text
-    for post in posts:
-        timestamp = datetime.datetime.strptime(post[2],"%Y-%m-%d %H:%M:%S")
-        pretty_data.append( (post[0], model.get_name_by_id(post[1]), timestamp, post[3]) )
-
-    user_id = session.get('user_id')
-    profile = username
-    if user_id:
-        username = model.get_name_by_id(user_id)
-        return render_template("wall.html", posts=pretty_data, userid=user_id, username=profile, current_user=username)
-
-    return render_template("wall.html", posts=pretty_data, username=username)
-
-@app.route("/user/<username>", methods=['POST'])
-def post_to_wall(username):
+@app.route("/user/<profile>", methods=['POST'])
+def post_to_wall(profile):
     content = request.form.get("post_text")
     # the person writing the post is the person logged in
     author_id = session['user_id']
     model.connect_to_db()
     # the owner is the person's wall we are currently looking at, and then we need the ID of that person
-    print "username is", username
-    owner_id = model.get_user_by_name(username)
+    owner_id = model.get_user_by_name(profile)
     # insert a row into the DB that contains the relevant data
     model.write_wall_post(owner_id, author_id, content)
     # then render the page with all of the wall posts on it, including the one we just wrote.
-    return redirect(url_for("show_wall_posts", username=username))
+    return redirect(url_for("show_wall_posts", profile=profile))
  
 @app.route("/logout")
 def logout():
@@ -124,10 +109,17 @@ def logout():
     return redirect(url_for("index"))
 
 def logged_in():
-    user_id = session.get('user_id')
-    if user_id:
-        model.connect_to_db()
-        return model.get_name_by_id(user_id)
+    return session.get('user_id')
+
+def make_pretty_data(posts):
+    pretty_data = []
+    for story in posts:
+        timestamp = datetime.datetime.strptime(str(story[2]),"%Y-%m-%d %H:%M:%S")
+        author_name = model.get_name_by_id(story[1])
+        owner_name = model.get_name_by_id((story[0]))
+        pretty_data.append( (owner_name, author_name, timestamp, story[3]) )
+
+    return pretty_data
 
 if __name__ == "__main__":
     app.run(debug = True)

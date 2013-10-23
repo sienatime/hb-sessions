@@ -1,15 +1,16 @@
 {% extends 'master.html' %}
 {% block body %}
-<h1>{{ username }}'s Wall Posts</h1>
 
-{% if userid and current_user != username %}
-<form method="POST" action="/user/{{ username }}">
-    <h4>Write on {{username}}'s wall!</h4>
-    <textarea name="post_text" class="form-control" rows="3"></textarea>
-<input type="submit" class="btn btn-lg btn-primary btn-block" value="Post">
-</form>
+<!-- If the user is logged in and viewing her own profile, show "Your Wall" -->
+{% if session['username'] == profile %}
+<h1>Your Wall</h1>
+{% else %}
+<!-- Otherwise display whose profile you are looking at-->
+<h1>{{ profile }}'s Wall Posts</h1>
+    <!-- Give the option to write on someone's wall if you are logged in -->
 {% endif %}
 
+<div id="postContainer">
 <!-- post: 0: owner ID, 1: author ID, 2: date, 3: text-->
     {% for post in posts %}
     <div class="post">
@@ -18,5 +19,13 @@
         <span>Posted on {{post[2].month}}-{{post[2].day}}-{{post[2].year}} at {{post[2].hour}}:{{post[2].minute}}:{{post[2].second}} (GMT)</span>
     </div>
     {% endfor %}
+</div>
 
+{% if session['user_id'] and session['username'] != profile%}
+    <form method="POST" action="/user/{{ profile }}" id="postToWall">
+        <h4>Write on {{profile}}'s wall!</h4>
+        <textarea name="post_text" class="form-control" rows="3"></textarea>
+    <input type="submit" class="btn btn-lg btn-primary btn-block" value="Post">
+    </form>
+{% endif %}
 {% endblock %}

@@ -5,14 +5,16 @@
 <div class="alert {{category}}">{{ message }}</div>
 {% endfor %}
 <!-- post: 0: owner ID, 1: author ID, 2: date, 3: text-->
+<div id="postContainer">
 {% for post in feed%}
     <div class="post">
-        <h3><a href="/user/{{post[1]}}">{{ post[1] }}</a> posted on {{post[0]}}'s wall</h3>
+        <h3><a href="/user/{{post[1]}}">{{ post[1] }}</a> posted on <a href="/user/{{post[0]}}">{{post[0]}}</a>'s wall</h3>
         <p>{{ post[3] }}</p>
         <span>Posted on {{post[2].month}}-{{post[2].day}}-{{post[2].year}} at {{post[2].hour}}:{{post[2].minute}}:{{post[2].second}} (GMT)</span>
     </div>
 {% endfor %}
+</div>
 
-<p>Go write on somebody's wall!</p>
+<h2>Go write on somebody's wall!</h2>
 
 {% endblock %}
